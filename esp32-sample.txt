@@ -1,0 +1,52 @@
+#define BLYNK_TEMPLATE_ID "TMPL3UYy1Wo5Y"
+#define BLYNK_TEMPLATE_NAME "plant monitoring"
+#define BLYNK_AUTH_TOKEN "WyJoaSR-6Sb0_2I1048d6Q-NZUKcAHc5"
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include <BH1750.h>
+#include <Wire.h>
+#include <DHT.h>
+
+// WiFi Credentials
+char ssid[] = "DHYAN";
+char pass[] = "dhyxxxxnn11";
+
+// Initialize Sensors
+#define DHT_PIN 4
+#define SOIL_MOISTURE_PIN 34
+DHT dht(DHT_PIN, DHT22);
+BH1750 lightMeter;
+
+BlynkTimer timer;
+
+void sendSensorData() {
+  float lux = lightMeter.readLightLevel();
+  float temp = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  int soilMoistureRaw = analogRead(SOIL_MOISTURE_PIN);
+  int soilMoisture = map(soilMoistureRaw, 4095, 0, 0, 100);
+
+  // Print data in CSV format
+  Serial.print(millis()); Serial.print(",");
+  Serial.print(lux); Serial.print(",");
+  Serial.print(temp); Serial.print(",");
+  Serial.print(humidity); Serial.print(",");
+  Serial.println(soilMoisture);
+}
+
+void setup() {
+  Serial.begin(115200);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  Wire.begin();
+  lightMeter.begin();
+  dht.begin();
+  pinMode(SOIL_MOISTURE_PIN, INPUT);
+
+  timer.setInterval(5000L, sendSensorData);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
